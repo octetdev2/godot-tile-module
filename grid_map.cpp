@@ -313,36 +313,6 @@ int GridMap::get_octant_size() const {
 	return octant_size;
 }
 
-void GridMap::set_center_x(bool p_enable) {
-	center_x = p_enable;
-	_recreate_octant_data();
-	emit_signal(SNAME("changed"));
-}
-
-bool GridMap::get_center_x() const {
-	return center_x;
-}
-
-void GridMap::set_center_y(bool p_enable) {
-	center_y = p_enable;
-	_recreate_octant_data();
-	emit_signal(SNAME("changed"));
-}
-
-bool GridMap::get_center_y() const {
-	return center_y;
-}
-
-void GridMap::set_center_z(bool p_enable) {
-	center_z = p_enable;
-	_recreate_octant_data();
-	emit_signal(SNAME("changed"));
-}
-
-bool GridMap::get_center_z() const {
-	return center_z;
-}
-
 void GridMap::set_cell_item(const Vector3i &p_position, int p_item, int p_rot) {
 	if (baked_meshes.size() && !recreating_octants) {
 		//if you set a cell item, baked meshes go good bye
@@ -523,13 +493,7 @@ Vector3 GridMap::map_to_world(const Vector3i &p_pos) const {
 		ret.x *= overlapping_ratio;
 	}
 
-	// Add the offset
-	Vector3 offset = Vector3(
-			0.5 * int(center_x),
-			0.5 * int(center_y),
-			0.5 * int(center_z));
-
-	return (ret + offset) * cell_size;
+	return (ret + Vector3(0.5, 0.5, 0.5)) * cell_size;
 }
 
 Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
@@ -1145,13 +1109,6 @@ void GridMap::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_update_octants_callback"), &GridMap::_update_octants_callback);
 	ClassDB::bind_method(D_METHOD("resource_changed", "resource"), &GridMap::resource_changed);
 
-	ClassDB::bind_method(D_METHOD("set_center_x", "enable"), &GridMap::set_center_x);
-	ClassDB::bind_method(D_METHOD("get_center_x"), &GridMap::get_center_x);
-	ClassDB::bind_method(D_METHOD("set_center_y", "enable"), &GridMap::set_center_y);
-	ClassDB::bind_method(D_METHOD("get_center_y"), &GridMap::get_center_y);
-	ClassDB::bind_method(D_METHOD("set_center_z", "enable"), &GridMap::set_center_z);
-	ClassDB::bind_method(D_METHOD("get_center_z"), &GridMap::get_center_z);
-
 	ClassDB::bind_method(D_METHOD("clear"), &GridMap::clear);
 
 	ClassDB::bind_method(D_METHOD("get_used_cells"), &GridMap::get_used_cells);
@@ -1172,9 +1129,6 @@ void GridMap::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "cell_offset_axis", PROPERTY_HINT_ENUM, "Horizontal Offset,Vertical Offset"), "set_cell_offset_axis", "get_cell_offset_axis");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "cell_size"), "set_cell_size", "get_cell_size");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "cell_octant_size", PROPERTY_HINT_RANGE, "1,1024,1"), "set_octant_size", "get_octant_size");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "cell_center_x"), "set_center_x", "get_center_x");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "cell_center_y"), "set_center_y", "get_center_y");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "cell_center_z"), "set_center_z", "get_center_z");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "cell_scale"), "set_cell_scale", "get_cell_scale");
 	ADD_GROUP("Collision", "collision_");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_layer", "get_collision_layer");
@@ -1270,13 +1224,6 @@ Array GridMap::get_meshes() const {
 	}
 
 	return meshes;
-}
-
-Vector3 GridMap::_get_offset() const {
-	return Vector3(
-			cell_size.x * 0.5 * int(center_x),
-			cell_size.y * 0.5 * int(center_y),
-			cell_size.z * 0.5 * int(center_z));
 }
 
 void GridMap::clear_baked_meshes() {
