@@ -199,6 +199,11 @@
 				Emitted when [member cell_size] changes.
 			</description>
 		</signal>
+		<signal name="changed">
+			<description>
+        Emitted when the grid map changes.
+			</description>
+		</signal>
 	</signals>
 	<constants>
 		<constant name="CELL_SHAPE_SQUARE" value="0" enum="CellShape">
