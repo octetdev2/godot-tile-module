@@ -1,0 +1,56 @@
+name: test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test_ubuntu:
+    name: test (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out godotengine/godot repository
+        uses: actions/checkout@v2
+        with:
+          repository: godotengine/godot
+          ref: master
+
+      # Clone our module under the correct directory
+      - name: Check out godot-gridmap-module repository
+        uses: actions/checkout@v2
+        with:
+          path: custom_modules/gridmap
+
+      - name: Configure dependencies
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/*
+          sudo cp -f misc/ci/sources.list /etc/apt/sources.list
+          sudo apt-get update
+          sudo apt-get install build-essential pkg-config libx11-dev libxcursor-dev \
+            libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev yasm \
+            xvfb wget unzip
+      # Use python 3.x release (works cross platform; best to keep self contained in it's own step)
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: '3.x'
+          # Optional - x64 or x86 architecture, defaults to x64
+          architecture: 'x64'
+
+      # Setup scons, print python version and scons version info, so if anything is broken it won't run the build.
+      - name: Configure Python packages
+        run: |
+          python -c "import sys; print(sys.version)"
+          python -m pip install scons
+          python --version
+          scons --version
+      - name: Build tests
+        run: |
+          scons --jobs=$(nproc) tests=yes
+      - name: Run tests
+        run: |
+          ls ./bin
+          ./bin/godot.linuxbsd.tools.64 --test
