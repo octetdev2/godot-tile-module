@@ -171,9 +171,6 @@ private:
 	CellOffsetAxis cell_offset_axis = CELL_OFFSET_AXIS_HORIZONTAL;
 	Vector3 cell_size = Vector3(2, 2, 2);
 	int octant_size = 8;
-	bool center_x = true;
-	bool center_y = true;
-	bool center_z = true;
 	float cell_scale = 1.0;
 
 	bool recreating_octants = false;
@@ -275,13 +272,6 @@ public:
 
 	void set_octant_size(int p_size);
 	int get_octant_size() const;
-
-	void set_center_x(bool p_enable);
-	bool get_center_x() const;
-	void set_center_y(bool p_enable);
-	bool get_center_y() const;
-	void set_center_z(bool p_enable);
-	bool get_center_z() const;
 
 	void set_cell_item(const Vector3i &p_position, int p_item, int p_rot = 0);
 	int get_cell_item(const Vector3i &p_position) const;
