@@ -197,11 +197,11 @@
 			<argument index="0" name="cell_size" type="Vector3" />
 			<description>
 				Emitted when [member cell_size] changes.
-			</description>
-		</signal>
+      </description>
+    </signal>
 		<signal name="changed">
 			<description>
-        Emitted when the grid map changes.
+        Emitted when the GridMap changes.
 			</description>
 		</signal>
 	</signals>
@@ -209,7 +209,10 @@
 		<constant name="CELL_SHAPE_SQUARE" value="0" enum="CellShape">
 			Rectangular cell shape.
 		</constant>
-		<constant name="CELL_SHAPE_HEXAGON" value="1" enum="CellShape">
+		<constant name="CELL_SHAPE_ISOMETRIC" value="1" enum="CellShape">
+			Diamond cell shape.
+		</constant>
+		<constant name="CELL_SHAPE_HEXAGON" value="2" enum="CellShape">
 			Hexagonal cell shape.
 		</constant>
 		<constant name="CELL_LAYOUT_STACKED" value="0" enum="CellLayout">
