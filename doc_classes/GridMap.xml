@@ -184,12 +184,6 @@
 		</member>
 	</members>
 	<signals>
-		<signal name="cell_size_changed">
-			<argument index="0" name="cell_size" type="Vector3" />
-			<description>
-				Emitted when [member cell_size] changes.
-      </description>
-    </signal>
 		<signal name="changed">
 			<description>
         Emitted when the GridMap changes.
