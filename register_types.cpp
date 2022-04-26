@@ -33,16 +33,16 @@
 #include "register_types.h"
 
 #include "core/object/class_db.h"
-#include "grid_map.h"
+#include "tile_map_3d.h"
 
 #ifdef TOOLS_ENABLED
-#include "editor/grid_map_editor_plugin.h"
+#include "editor/tile_map_3d_editor_plugin.h"
 #endif
 
 void register_tile_types() {
-	GDREGISTER_CLASS(GridMap);
+	GDREGISTER_CLASS(TileMap3D);
 #ifdef TOOLS_ENABLED
-	EditorPlugins::add_by_type<GridMapEditorPlugin>();
+	EditorPlugins::add_by_type<TileMap3DEditorPlugin>();
 #endif
 }
 

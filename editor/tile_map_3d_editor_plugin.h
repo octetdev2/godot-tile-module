@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  grid_map_editor_plugin.h                                             */
+/*  tile_map_3d_editor_plugin.h                                          */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,12 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GRID_MAP_EDITOR_PLUGIN_H
-#define GRID_MAP_EDITOR_PLUGIN_H
+#ifndef TILE_MAP_3D_EDITOR_PLUGIN_H
+#define TILE_MAP_3D_EDITOR_PLUGIN_H
 
 #ifdef TOOLS_ENABLED
 
-#include "../grid_map.h"
+#include "../tile_map_3d.h"
 #include "editor/editor_plugin.h"
 #include "scene/gui/item_list.h"
 #include "scene/gui/slider.h"
@@ -41,8 +41,8 @@
 
 class Node3DEditorPlugin;
 
-class GridMapEditor : public VBoxContainer {
-	GDCLASS(GridMapEditor, VBoxContainer);
+class TileMap3DEditor : public VBoxContainer {
+	GDCLASS(TileMap3DEditor, VBoxContainer);
 
 	enum {
 		GRID_CURSOR_SIZE = 50
@@ -88,7 +88,7 @@ class GridMapEditor : public VBoxContainer {
 
 	List<SetItem> set_items;
 
-	GridMap *node = nullptr;
+	TileMap3D *node = nullptr;
 	MeshLibrary *last_mesh_library = nullptr;
 
 	Transform3D grid_xform;
@@ -218,7 +218,7 @@ class GridMapEditor : public VBoxContainer {
 
 	bool do_input_action(Camera3D *p_camera, const Point2 &p_point, bool p_click);
 
-	friend class GridMapEditorPlugin;
+	friend class TileMap3DEditorPlugin;
 
 protected:
 	void _notification(int p_what);
@@ -228,31 +228,31 @@ protected:
 public:
 	EditorPlugin::AfterGUIInput forward_spatial_input_event(Camera3D *p_camera, const Ref<InputEvent> &p_event);
 
-	void edit(GridMap *p_gridmap);
-	GridMapEditor();
-	~GridMapEditor();
+	void edit(TileMap3D *p_gridmap);
+	TileMap3DEditor();
+	~TileMap3DEditor();
 };
 
-class GridMapEditorPlugin : public EditorPlugin {
-	GDCLASS(GridMapEditorPlugin, EditorPlugin);
+class TileMap3DEditorPlugin : public EditorPlugin {
+	GDCLASS(TileMap3DEditorPlugin, EditorPlugin);
 
-	GridMapEditor *grid_map_editor = nullptr;
+	TileMap3DEditor *grid_map_editor = nullptr;
 
 protected:
 	void _notification(int p_what);
 
 public:
 	virtual EditorPlugin::AfterGUIInput forward_spatial_gui_input(Camera3D *p_camera, const Ref<InputEvent> &p_event) override { return grid_map_editor->forward_spatial_input_event(p_camera, p_event); }
-	virtual String get_name() const override { return "GridMap"; }
+	virtual String get_name() const override { return "TileMap3D"; }
 	bool has_main_screen() const override { return false; }
 	virtual void edit(Object *p_object) override;
 	virtual bool handles(Object *p_object) const override;
 	virtual void make_visible(bool p_visible) override;
 
-	GridMapEditorPlugin();
-	~GridMapEditorPlugin();
+	TileMap3DEditorPlugin();
+	~TileMap3DEditorPlugin();
 };
 
 #endif // TOOLS_ENABLED
 
-#endif // GRID_MAP_EDITOR_PLUGIN_H
+#endif // TILE_MAP_3D_EDITOR_PLUGIN_H

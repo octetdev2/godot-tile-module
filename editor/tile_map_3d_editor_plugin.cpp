@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  grid_map_editor_plugin.cpp                                           */
+/*  tile_map_3d_editor_plugin.cpp                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "grid_map_editor_plugin.h"
+#include "tile_map_3d_editor_plugin.h"
 
 #ifdef TOOLS_ENABLED
 
@@ -41,13 +41,13 @@
 #include "scene/3d/camera_3d.h"
 #include "scene/main/window.h"
 
-void GridMapEditor::_node_removed(Node *p_node) {
+void TileMap3DEditor::_node_removed(Node *p_node) {
 	if (p_node == node) {
 		node = nullptr;
 	}
 }
 
-void GridMapEditor::_configure() {
+void TileMap3DEditor::_configure() {
 	if (!node) {
 		return;
 	}
@@ -55,7 +55,7 @@ void GridMapEditor::_configure() {
 	update_grid();
 }
 
-void GridMapEditor::_menu_option(int p_option) {
+void TileMap3DEditor::_menu_option(int p_option) {
 	switch (p_option) {
 		case MENU_OPTION_PREV_LEVEL: {
 			floor->set_value(floor->get_value() - 1);
@@ -239,7 +239,7 @@ void GridMapEditor::_menu_option(int p_option) {
 	}
 }
 
-void GridMapEditor::_update_cursor_transform() {
+void TileMap3DEditor::_update_cursor_transform() {
 	cursor_transform = Transform3D();
 	cursor_transform.origin = node->map_to_world(cursor_cell);
 	cursor_transform.basis.set_orthogonal_index(cursor_rot);
@@ -258,7 +258,7 @@ void GridMapEditor::_update_cursor_transform() {
 	}
 }
 
-void GridMapEditor::_update_selection_transform() {
+void TileMap3DEditor::_update_selection_transform() {
 	Transform3D xf_zero;
 	xf_zero.basis.set_zero();
 
@@ -297,7 +297,7 @@ void GridMapEditor::_update_selection_transform() {
 	}
 }
 
-void GridMapEditor::_validate_selection() {
+void TileMap3DEditor::_validate_selection() {
 	if (!selection.active) {
 		return;
 	}
@@ -317,7 +317,7 @@ void GridMapEditor::_validate_selection() {
 	_update_selection_transform();
 }
 
-void GridMapEditor::_set_selection(bool p_active, const Vector3 &p_begin, const Vector3 &p_end) {
+void TileMap3DEditor::_set_selection(bool p_active, const Vector3 &p_begin, const Vector3 &p_end) {
 	selection.active = p_active;
 	selection.begin = p_begin;
 	selection.end = p_end;
@@ -334,7 +334,7 @@ void GridMapEditor::_set_selection(bool p_active, const Vector3 &p_begin, const 
 	options->get_popup()->set_item_disabled(options->get_popup()->get_item_index(MENU_OPTION_SELECTION_FILL), !selection.active);
 }
 
-bool GridMapEditor::do_input_action(Camera3D *p_camera, const Point2 &p_point, bool p_click) {
+bool TileMap3DEditor::do_input_action(Camera3D *p_camera, const Point2 &p_point, bool p_click) {
 	if (!spatial_editor) {
 		return false;
 	}
@@ -441,17 +441,17 @@ bool GridMapEditor::do_input_action(Camera3D *p_camera, const Point2 &p_point, b
 	return false;
 }
 
-void GridMapEditor::_delete_selection() {
+void TileMap3DEditor::_delete_selection() {
 	if (!selection.active) {
 		return;
 	}
 
-	undo_redo->create_action(TTR("GridMap Delete Selection"));
+	undo_redo->create_action(TTR("TileMap3D Delete Selection"));
 	for (int i = selection.begin.x; i <= selection.end.x; i++) {
 		for (int j = selection.begin.y; j <= selection.end.y; j++) {
 			for (int k = selection.begin.z; k <= selection.end.z; k++) {
 				Vector3i selected = Vector3i(i, j, k);
-				undo_redo->add_do_method(node, "set_cell_item", selected, GridMap::INVALID_CELL_ITEM);
+				undo_redo->add_do_method(node, "set_cell_item", selected, TileMap3D::INVALID_CELL_ITEM);
 				undo_redo->add_undo_method(node, "set_cell_item", selected, node->get_cell_item(selected), node->get_cell_item_orientation(selected));
 			}
 		}
@@ -461,12 +461,12 @@ void GridMapEditor::_delete_selection() {
 	undo_redo->commit_action();
 }
 
-void GridMapEditor::_fill_selection() {
+void TileMap3DEditor::_fill_selection() {
 	if (!selection.active) {
 		return;
 	}
 
-	undo_redo->create_action(TTR("GridMap Fill Selection"));
+	undo_redo->create_action(TTR("TileMap3D Fill Selection"));
 	for (int i = selection.begin.x; i <= selection.end.x; i++) {
 		for (int j = selection.begin.y; j <= selection.end.y; j++) {
 			for (int k = selection.begin.z; k <= selection.end.z; k++) {
@@ -481,7 +481,7 @@ void GridMapEditor::_fill_selection() {
 	undo_redo->commit_action();
 }
 
-void GridMapEditor::_clear_clipboard_data() {
+void TileMap3DEditor::_clear_clipboard_data() {
 	for (const ClipboardItem &E : clipboard_items) {
 		RenderingServer::get_singleton()->free(E.instance);
 	}
@@ -489,7 +489,7 @@ void GridMapEditor::_clear_clipboard_data() {
 	clipboard_items.clear();
 }
 
-void GridMapEditor::_set_clipboard_data() {
+void TileMap3DEditor::_set_clipboard_data() {
 	_clear_clipboard_data();
 
 	Ref<MeshLibrary> meshLibrary = node->get_mesh_library();
@@ -499,7 +499,7 @@ void GridMapEditor::_set_clipboard_data() {
 			for (int k = selection.begin.z; k <= selection.end.z; k++) {
 				Vector3i selected = Vector3i(i, j, k);
 				int itm = node->get_cell_item(selected);
-				if (itm == GridMap::INVALID_CELL_ITEM) {
+				if (itm == TileMap3D::INVALID_CELL_ITEM) {
 					continue;
 				}
 
@@ -517,7 +517,7 @@ void GridMapEditor::_set_clipboard_data() {
 	}
 }
 
-void GridMapEditor::_update_paste_indicator() {
+void TileMap3DEditor::_update_paste_indicator() {
 	if (input_action != INPUT_PASTE) {
 		Transform3D xf;
 		xf.basis.set_zero();
@@ -551,7 +551,7 @@ void GridMapEditor::_update_paste_indicator() {
 	}
 }
 
-void GridMapEditor::_do_paste() {
+void TileMap3DEditor::_do_paste() {
 	int idx = options->get_popup()->get_item_index(MENU_OPTION_PASTE_SELECTS);
 	bool reselect = options->get_popup()->is_item_checked(idx);
 
@@ -559,7 +559,7 @@ void GridMapEditor::_do_paste() {
 	rot.set_orthogonal_index(paste_indicator.orientation);
 
 	Vector3 ofs = paste_indicator.current - paste_indicator.click;
-	undo_redo->create_action(TTR("GridMap Paste Selection"));
+	undo_redo->create_action(TTR("TileMap3D Paste Selection"));
 
 	for (const ClipboardItem &item : clipboard_items) {
 		Vector3 position = rot.xform(item.grid_offset) + paste_indicator.begin + ofs;
@@ -582,7 +582,7 @@ void GridMapEditor::_do_paste() {
 	_clear_clipboard_data();
 }
 
-EditorPlugin::AfterGUIInput GridMapEditor::forward_spatial_input_event(Camera3D *p_camera, const Ref<InputEvent> &p_event) {
+EditorPlugin::AfterGUIInput TileMap3DEditor::forward_spatial_input_event(Camera3D *p_camera, const Ref<InputEvent> &p_event) {
 	if (!node) {
 		return EditorPlugin::AFTER_GUI_INPUT_PASS;
 	}
@@ -646,7 +646,7 @@ EditorPlugin::AfterGUIInput GridMapEditor::forward_spatial_input_event(Camera3D 
 		} else {
 			if ((mb->get_button_index() == MouseButton::RIGHT && input_action == INPUT_ERASE) || (mb->get_button_index() == MouseButton::LEFT && input_action == INPUT_PAINT)) {
 				if (set_items.size()) {
-					undo_redo->create_action(TTR("GridMap Paint"));
+					undo_redo->create_action(TTR("TileMap3D Paint"));
 					for (const SetItem &si : set_items) {
 						undo_redo->add_do_method(node, "set_cell_item", si.position, si.new_value, si.new_orientation);
 					}
@@ -667,7 +667,7 @@ EditorPlugin::AfterGUIInput GridMapEditor::forward_spatial_input_event(Camera3D 
 			}
 
 			if (mb->get_button_index() == MouseButton::LEFT && input_action == INPUT_SELECT) {
-				undo_redo->create_action(TTR("GridMap Selection"));
+				undo_redo->create_action(TTR("TileMap3D Selection"));
 				undo_redo->add_do_method(this, "_set_selection", selection.active, selection.begin, selection.end);
 				undo_redo->add_undo_method(this, "_set_selection", last_selection.active, last_selection.begin, last_selection.end);
 				undo_redo->commit_action();
@@ -758,7 +758,7 @@ struct _CGMEItemSort {
 	_FORCE_INLINE_ bool operator<(const _CGMEItemSort &r_it) const { return name < r_it.name; }
 };
 
-void GridMapEditor::_set_display_mode(int p_mode) {
+void TileMap3DEditor::_set_display_mode(int p_mode) {
 	if (display_mode == p_mode) {
 		return;
 	}
@@ -776,11 +776,11 @@ void GridMapEditor::_set_display_mode(int p_mode) {
 	update_palette();
 }
 
-void GridMapEditor::_text_changed(const String &p_text) {
+void TileMap3DEditor::_text_changed(const String &p_text) {
 	update_palette();
 }
 
-void GridMapEditor::_sbox_input(const Ref<InputEvent> &p_ie) {
+void TileMap3DEditor::_sbox_input(const Ref<InputEvent> &p_ie) {
 	const Ref<InputEventKey> k = p_ie;
 
 	if (k.is_valid() && (k->get_keycode() == Key::UP || k->get_keycode() == Key::DOWN || k->get_keycode() == Key::PAGEUP || k->get_keycode() == Key::PAGEDOWN)) {
@@ -790,7 +790,7 @@ void GridMapEditor::_sbox_input(const Ref<InputEvent> &p_ie) {
 	}
 }
 
-void GridMapEditor::_mesh_library_palette_input(const Ref<InputEvent> &p_ie) {
+void TileMap3DEditor::_mesh_library_palette_input(const Ref<InputEvent> &p_ie) {
 	const Ref<InputEventMouseButton> mb = p_ie;
 
 	// Zoom in/out using Ctrl + mouse wheel
@@ -805,12 +805,12 @@ void GridMapEditor::_mesh_library_palette_input(const Ref<InputEvent> &p_ie) {
 	}
 }
 
-void GridMapEditor::_icon_size_changed(float p_value) {
+void TileMap3DEditor::_icon_size_changed(float p_value) {
 	mesh_library_palette->set_icon_scale(p_value);
 	update_palette();
 }
 
-void GridMapEditor::update_palette() {
+void TileMap3DEditor::update_palette() {
 	int selected = mesh_library_palette->get_current();
 
 	float min_size = EDITOR_GET("editors/grid_map/preview_size");
@@ -890,9 +890,9 @@ void GridMapEditor::update_palette() {
 	last_mesh_library = mesh_library.operator->();
 }
 
-void GridMapEditor::edit(GridMap *p_gridmap) {
+void TileMap3DEditor::edit(TileMap3D *p_gridmap) {
 	if (!p_gridmap && node) {
-		node->disconnect("changed", callable_mp(this, &GridMapEditor::_draw_grids));
+		node->disconnect("changed", callable_mp(this, &TileMap3DEditor::_draw_grids));
 	}
 
 	node = p_gridmap;
@@ -924,10 +924,10 @@ void GridMapEditor::edit(GridMap *p_gridmap) {
 	_draw_grids();
 	update_grid();
 
-	node->connect("changed", callable_mp(this, &GridMapEditor::_draw_grids));
+	node->connect("changed", callable_mp(this, &TileMap3DEditor::_draw_grids));
 }
 
-void GridMapEditor::update_grid() {
+void TileMap3DEditor::update_grid() {
 	grid_xform.origin.x -= 1; // Force update in hackish way.
 
 	grid_ofs[edit_axis] = edit_floor[edit_axis] * node->get_cell_size()[edit_axis];
@@ -944,9 +944,9 @@ void GridMapEditor::update_grid() {
 	updating = false;
 }
 
-void GridMapEditor::_draw_floor_grid(RID mesh_id, int floor) {
+void TileMap3DEditor::_draw_floor_grid(RID mesh_id, int floor) {
 	Vector<Vector2> shape_points;
-	if (node->get_cell_shape() == GridMap::CELL_SHAPE_SQUARE) {
+	if (node->get_cell_shape() == TileMap3D::CELL_SHAPE_SQUARE) {
 		shape_points.append(Vector2(-0.5, -0.5));
 		shape_points.append(Vector2(0.5, -0.5));
 		shape_points.append(Vector2(0.5, 0.5));
@@ -954,13 +954,13 @@ void GridMapEditor::_draw_floor_grid(RID mesh_id, int floor) {
 	} else {
 		float overlap = 0.0;
 		switch (node->get_cell_shape()) {
-			case GridMap::CELL_SHAPE_ISOMETRIC:
+			case TileMap3D::CELL_SHAPE_ISOMETRIC:
 				overlap = 0.5;
 				break;
-			case GridMap::CELL_SHAPE_HALF_OFFSET_SQUARE:
+			case TileMap3D::CELL_SHAPE_HALF_OFFSET_SQUARE:
 				overlap = 0.0;
 				break;
-			case GridMap::CELL_SHAPE_HEXAGON:
+			case TileMap3D::CELL_SHAPE_HEXAGON:
 				overlap = 0.25;
 				break;
 			default:
@@ -974,7 +974,7 @@ void GridMapEditor::_draw_floor_grid(RID mesh_id, int floor) {
 		shape_points.append(Vector2(0.5, 0.5 - overlap));
 		shape_points.append(Vector2(0.5, overlap - 0.5));
 
-		if (node->get_cell_offset_axis() == GridMap::CELL_OFFSET_AXIS_VERTICAL) {
+		if (node->get_cell_offset_axis() == TileMap3D::CELL_OFFSET_AXIS_VERTICAL) {
 			for (int i = 0; i < shape_points.size(); i++) {
 				shape_points.write[i] = Vector2(shape_points[i].y, shape_points[i].x);
 			}
@@ -1010,7 +1010,7 @@ void GridMapEditor::_draw_floor_grid(RID mesh_id, int floor) {
 	RenderingServer::get_singleton()->mesh_surface_set_material(mesh_id, 0, indicator_mat->get_rid());
 }
 
-void GridMapEditor::_draw_plane_grid(RID mesh_id, int plane, Vector3 axis_n1, Vector3 axis_n2) {
+void TileMap3DEditor::_draw_plane_grid(RID mesh_id, int plane, Vector3 axis_n1, Vector3 axis_n2) {
 	Vector<Vector3> grid_points;
 	Vector<Color> grid_colors;
 
@@ -1049,7 +1049,7 @@ void GridMapEditor::_draw_plane_grid(RID mesh_id, int plane, Vector3 axis_n1, Ve
 	RenderingServer::get_singleton()->mesh_surface_set_material(mesh_id, 0, indicator_mat->get_rid());
 }
 
-void GridMapEditor::_draw_grids() {
+void TileMap3DEditor::_draw_grids() {
 	Vector3 edited_floor = node->has_meta("_editor_floor_") ? node->get_meta("_editor_floor_") : Variant();
 
 	for (int i = 0; i < 3; i++) {
@@ -1062,18 +1062,18 @@ void GridMapEditor::_draw_grids() {
 	_draw_plane_grid(grid[2], edit_floor[2], Vector3(1, 0, 0), Vector3(0, 1, 0));
 }
 
-void GridMapEditor::_update_theme() {
-	options->set_icon(get_theme_icon(SNAME("GridMap"), SNAME("EditorIcons")));
+void TileMap3DEditor::_update_theme() {
+	options->set_icon(get_theme_icon(SNAME("TileMap3D"), SNAME("EditorIcons")));
 	search_box->set_right_icon(get_theme_icon(SNAME("Search"), SNAME("EditorIcons")));
 	mode_thumbnail->set_icon(get_theme_icon(SNAME("FileThumbnail"), SNAME("EditorIcons")));
 	mode_list->set_icon(get_theme_icon(SNAME("FileList"), SNAME("EditorIcons")));
 }
 
-void GridMapEditor::_notification(int p_what) {
+void TileMap3DEditor::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
-			get_tree()->connect("node_removed", callable_mp(this, &GridMapEditor::_node_removed));
-			mesh_library_palette->connect("item_selected", callable_mp(this, &GridMapEditor::_item_selected_cbk));
+			get_tree()->connect("node_removed", callable_mp(this, &TileMap3DEditor::_node_removed));
+			mesh_library_palette->connect("item_selected", callable_mp(this, &TileMap3DEditor::_item_selected_cbk));
 			for (int i = 0; i < 3; i++) {
 				grid[i] = RS::get_singleton()->mesh_create();
 				grid_instance[i] = RS::get_singleton()->instance_create2(grid[i], get_tree()->get_root()->get_world_3d()->get_scenario());
@@ -1093,7 +1093,7 @@ void GridMapEditor::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
-			get_tree()->disconnect("node_removed", callable_mp(this, &GridMapEditor::_node_removed));
+			get_tree()->disconnect("node_removed", callable_mp(this, &TileMap3DEditor::_node_removed));
 			_clear_clipboard_data();
 
 			for (int i = 0; i < 3; i++) {
@@ -1145,7 +1145,7 @@ void GridMapEditor::_notification(int p_what) {
 	}
 }
 
-void GridMapEditor::_update_cursor_instance() {
+void TileMap3DEditor::_update_cursor_instance() {
 	if (!node) {
 		return;
 	}
@@ -1166,13 +1166,13 @@ void GridMapEditor::_update_cursor_instance() {
 	}
 }
 
-void GridMapEditor::_item_selected_cbk(int idx) {
+void TileMap3DEditor::_item_selected_cbk(int idx) {
 	selected_palette = mesh_library_palette->get_item_metadata(idx);
 
 	_update_cursor_instance();
 }
 
-void GridMapEditor::_floor_changed(float p_value) {
+void TileMap3DEditor::_floor_changed(float p_value) {
 	if (updating) {
 		return;
 	}
@@ -1183,16 +1183,16 @@ void GridMapEditor::_floor_changed(float p_value) {
 	_update_selection_transform();
 }
 
-void GridMapEditor::_floor_mouse_exited() {
+void TileMap3DEditor::_floor_mouse_exited() {
 	floor->get_line_edit()->release_focus();
 }
 
-void GridMapEditor::_bind_methods() {
-	ClassDB::bind_method("_configure", &GridMapEditor::_configure);
-	ClassDB::bind_method("_set_selection", &GridMapEditor::_set_selection);
+void TileMap3DEditor::_bind_methods() {
+	ClassDB::bind_method("_configure", &TileMap3DEditor::_configure);
+	ClassDB::bind_method("_set_selection", &TileMap3DEditor::_set_selection);
 }
 
-GridMapEditor::GridMapEditor() {
+TileMap3DEditor::TileMap3DEditor() {
 	undo_redo = EditorNode::get_singleton()->get_undo_redo();
 
 	int mw = EDITOR_DEF("editors/grid_map/palette_min_width", 230);
@@ -1216,9 +1216,9 @@ GridMapEditor::GridMapEditor() {
 	floor->get_line_edit()->add_theme_constant_override("minimum_character_width", 16);
 
 	spatial_editor_hb->add_child(floor);
-	floor->connect("value_changed", callable_mp(this, &GridMapEditor::_floor_changed));
-	floor->connect("mouse_exited", callable_mp(this, &GridMapEditor::_floor_mouse_exited));
-	floor->get_line_edit()->connect("mouse_exited", callable_mp(this, &GridMapEditor::_floor_mouse_exited));
+	floor->connect("value_changed", callable_mp(this, &TileMap3DEditor::_floor_changed));
+	floor->connect("mouse_exited", callable_mp(this, &TileMap3DEditor::_floor_mouse_exited));
+	floor->get_line_edit()->connect("mouse_exited", callable_mp(this, &TileMap3DEditor::_floor_mouse_exited));
 
 	spatial_editor_hb->add_child(memnew(VSeparator));
 
@@ -1226,7 +1226,7 @@ GridMapEditor::GridMapEditor() {
 	spatial_editor_hb->add_child(options);
 	spatial_editor_hb->hide();
 
-	options->set_text(TTR("Grid Map"));
+	options->set_text(TTR("TileMap3D"));
 	options->get_popup()->add_item(TTR("Previous Floor"), MENU_OPTION_PREV_LEVEL, Key::Q);
 	options->get_popup()->add_item(TTR("Next Floor"), MENU_OPTION_NEXT_LEVEL, Key::E);
 	options->get_popup()->add_separator();
@@ -1254,7 +1254,7 @@ GridMapEditor::GridMapEditor() {
 	options->get_popup()->add_item(TTR("Settings..."), MENU_OPTION_GRIDMAP_SETTINGS);
 
 	settings_dialog = memnew(ConfirmationDialog);
-	settings_dialog->set_title(TTR("GridMap Settings"));
+	settings_dialog->set_title(TTR("TileMap3D Settings"));
 	add_child(settings_dialog);
 	settings_vbc = memnew(VBoxContainer);
 	settings_vbc->set_custom_minimum_size(Size2(200, 0) * EDSCALE);
@@ -1267,7 +1267,7 @@ GridMapEditor::GridMapEditor() {
 	settings_pick_distance->set_value(EDITOR_GET("editors/grid_map/pick_distance"));
 	settings_vbc->add_margin_child(TTR("Pick Distance:"), settings_pick_distance);
 
-	options->get_popup()->connect("id_pressed", callable_mp(this, &GridMapEditor::_menu_option));
+	options->get_popup()->connect("id_pressed", callable_mp(this, &TileMap3DEditor::_menu_option));
 
 	HBoxContainer *hb = memnew(HBoxContainer);
 	add_child(hb);
@@ -1277,22 +1277,22 @@ GridMapEditor::GridMapEditor() {
 	search_box->set_h_size_flags(SIZE_EXPAND_FILL);
 	search_box->set_placeholder(TTR("Filter meshes"));
 	hb->add_child(search_box);
-	search_box->connect("text_changed", callable_mp(this, &GridMapEditor::_text_changed));
-	search_box->connect("gui_input", callable_mp(this, &GridMapEditor::_sbox_input));
+	search_box->connect("text_changed", callable_mp(this, &TileMap3DEditor::_text_changed));
+	search_box->connect("gui_input", callable_mp(this, &TileMap3DEditor::_sbox_input));
 
 	mode_thumbnail = memnew(Button);
 	mode_thumbnail->set_flat(true);
 	mode_thumbnail->set_toggle_mode(true);
 	mode_thumbnail->set_pressed(true);
 	hb->add_child(mode_thumbnail);
-	mode_thumbnail->connect("pressed", callable_mp(this, &GridMapEditor::_set_display_mode), varray(DISPLAY_THUMBNAIL));
+	mode_thumbnail->connect("pressed", callable_mp(this, &TileMap3DEditor::_set_display_mode), varray(DISPLAY_THUMBNAIL));
 
 	mode_list = memnew(Button);
 	mode_list->set_flat(true);
 	mode_list->set_toggle_mode(true);
 	mode_list->set_pressed(false);
 	hb->add_child(mode_list);
-	mode_list->connect("pressed", callable_mp(this, &GridMapEditor::_set_display_mode), varray(DISPLAY_LIST));
+	mode_list->connect("pressed", callable_mp(this, &TileMap3DEditor::_set_display_mode), varray(DISPLAY_LIST));
 
 	size_slider = memnew(HSlider);
 	size_slider->set_h_size_flags(SIZE_EXPAND_FILL);
@@ -1300,7 +1300,7 @@ GridMapEditor::GridMapEditor() {
 	size_slider->set_max(4.0f);
 	size_slider->set_step(0.1f);
 	size_slider->set_value(1.0f);
-	size_slider->connect("value_changed", callable_mp(this, &GridMapEditor::_icon_size_changed));
+	size_slider->connect("value_changed", callable_mp(this, &TileMap3DEditor::_icon_size_changed));
 	add_child(size_slider);
 
 	EDITOR_DEF("editors/grid_map/preview_size", 64);
@@ -1308,10 +1308,10 @@ GridMapEditor::GridMapEditor() {
 	mesh_library_palette = memnew(ItemList);
 	add_child(mesh_library_palette);
 	mesh_library_palette->set_v_size_flags(SIZE_EXPAND_FILL);
-	mesh_library_palette->connect("gui_input", callable_mp(this, &GridMapEditor::_mesh_library_palette_input));
+	mesh_library_palette->connect("gui_input", callable_mp(this, &TileMap3DEditor::_mesh_library_palette_input));
 
 	info_message = memnew(Label);
-	info_message->set_text(TTR("Give a MeshLibrary resource to this GridMap to use its meshes."));
+	info_message->set_text(TTR("Give a MeshLibrary resource to this TileMap3D to use its meshes."));
 	info_message->set_vertical_alignment(VERTICAL_ALIGNMENT_CENTER);
 	info_message->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_CENTER);
 	info_message->set_autowrap_mode(Label::AUTOWRAP_WORD_SMART);
@@ -1450,7 +1450,7 @@ GridMapEditor::GridMapEditor() {
 	indicator_mat->set_albedo(Color(0.8, 0.5, 0.1));
 }
 
-GridMapEditor::~GridMapEditor() {
+TileMap3DEditor::~TileMap3DEditor() {
 	_clear_clipboard_data();
 
 	for (int i = 0; i < 3; i++) {
@@ -1482,7 +1482,7 @@ GridMapEditor::~GridMapEditor() {
 	}
 }
 
-void GridMapEditorPlugin::_notification(int p_what) {
+void TileMap3DEditorPlugin::_notification(int p_what) {
 	switch (p_what) {
 		case EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED: {
 			switch ((int)EditorSettings::get_singleton()->get("editors/grid_map/editor_side")) {
@@ -1497,15 +1497,15 @@ void GridMapEditorPlugin::_notification(int p_what) {
 	}
 }
 
-void GridMapEditorPlugin::edit(Object *p_object) {
-	grid_map_editor->edit(Object::cast_to<GridMap>(p_object));
+void TileMap3DEditorPlugin::edit(Object *p_object) {
+	grid_map_editor->edit(Object::cast_to<TileMap3D>(p_object));
 }
 
-bool GridMapEditorPlugin::handles(Object *p_object) const {
-	return p_object->is_class("GridMap");
+bool TileMap3DEditorPlugin::handles(Object *p_object) const {
+	return p_object->is_class("TileMap3D");
 }
 
-void GridMapEditorPlugin::make_visible(bool p_visible) {
+void TileMap3DEditorPlugin::make_visible(bool p_visible) {
 	if (p_visible) {
 		grid_map_editor->show();
 		grid_map_editor->spatial_editor_hb->show();
@@ -1518,11 +1518,11 @@ void GridMapEditorPlugin::make_visible(bool p_visible) {
 	}
 }
 
-GridMapEditorPlugin::GridMapEditorPlugin() {
+TileMap3DEditorPlugin::TileMap3DEditorPlugin() {
 	EDITOR_DEF("editors/grid_map/editor_side", 1);
 	EditorSettings::get_singleton()->add_property_hint(PropertyInfo(Variant::INT, "editors/grid_map/editor_side", PROPERTY_HINT_ENUM, "Left,Right"));
 
-	grid_map_editor = memnew(GridMapEditor);
+	grid_map_editor = memnew(TileMap3DEditor);
 	switch ((int)EditorSettings::get_singleton()->get("editors/grid_map/editor_side")) {
 		case 0: { // Left.
 			Node3DEditor::get_singleton()->add_control_to_left_panel(grid_map_editor);
@@ -1534,7 +1534,7 @@ GridMapEditorPlugin::GridMapEditorPlugin() {
 	grid_map_editor->hide();
 }
 
-GridMapEditorPlugin::~GridMapEditorPlugin() {
+TileMap3DEditorPlugin::~TileMap3DEditorPlugin() {
 }
 
 #endif // TOOLS_ENABLED

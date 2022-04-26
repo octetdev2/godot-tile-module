@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  grid_map.h                                                           */
+/*  tile_map_3d.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GRID_MAP_H
-#define GRID_MAP_H
+#ifndef TILE_MAP_3D_H
+#define TILE_MAP_3D_H
 
 #include "scene/3d/node_3d.h"
 #include "scene/resources/mesh_library.h"
@@ -40,8 +40,8 @@
 
 class PhysicsMaterial;
 
-class GridMap : public Node3D {
-	GDCLASS(GridMap, Node3D);
+class TileMap3D : public Node3D {
+	GDCLASS(TileMap3D, Node3D);
 
 public:
 	enum CellShape {
@@ -109,7 +109,7 @@ private:
 
 	/**
 	 * @brief An Octant is a prism containing Cells, and possibly belonging to an Area.
-	 * A GridMap can have multiple Octants.
+	 * A TileMap3D can have multiple Octants.
 	 */
 	struct Octant {
 		struct NavMesh {
@@ -296,12 +296,12 @@ public:
 	Array get_bake_meshes();
 	RID get_bake_mesh_instance(int p_idx);
 
-	GridMap();
-	~GridMap();
+	TileMap3D();
+	~TileMap3D();
 };
 
-VARIANT_ENUM_CAST(GridMap::CellShape);
-VARIANT_ENUM_CAST(GridMap::CellLayout);
-VARIANT_ENUM_CAST(GridMap::CellOffsetAxis);
+VARIANT_ENUM_CAST(TileMap3D::CellShape);
+VARIANT_ENUM_CAST(TileMap3D::CellLayout);
+VARIANT_ENUM_CAST(TileMap3D::CellOffsetAxis);
 
-#endif // GRID_MAP_H
+#endif // TILE_MAP_3D_H

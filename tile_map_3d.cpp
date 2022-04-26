@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  grid_map.cpp                                                         */
+/*  tile_map_3d.cpp                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "grid_map.h"
+#include "tile_map_3d.h"
 
 #include "core/io/marshalls.h"
 #include "core/object/message_queue.h"
@@ -41,7 +41,7 @@
 #include "servers/navigation_server_3d.h"
 #include "servers/rendering_server.h"
 
-bool GridMap::_set(const StringName &p_name, const Variant &p_value) {
+bool TileMap3D::_set(const StringName &p_name, const Variant &p_value) {
 	String name = p_name;
 
 	if (name == "data") {
@@ -92,7 +92,7 @@ bool GridMap::_set(const StringName &p_name, const Variant &p_value) {
 	return true;
 }
 
-bool GridMap::_get(const StringName &p_name, Variant &r_ret) const {
+bool TileMap3D::_get(const StringName &p_name, Variant &r_ret) const {
 	String name = p_name;
 
 	if (name == "data") {
@@ -127,7 +127,7 @@ bool GridMap::_get(const StringName &p_name, Variant &r_ret) const {
 	return true;
 }
 
-void GridMap::_get_property_list(List<PropertyInfo> *p_list) const {
+void TileMap3D::_get_property_list(List<PropertyInfo> *p_list) const {
 	if (baked_meshes.size()) {
 		p_list->push_back(PropertyInfo(Variant::ARRAY, "baked_meshes", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE));
 	}
@@ -135,7 +135,7 @@ void GridMap::_get_property_list(List<PropertyInfo> *p_list) const {
 	p_list->push_back(PropertyInfo(Variant::DICTIONARY, "data", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE));
 }
 
-void GridMap::_validate_property(PropertyInfo &property) const {
+void TileMap3D::_validate_property(PropertyInfo &property) const {
 	if (property.name == "cell_layout" && cell_shape == CELL_SHAPE_SQUARE) {
 		property.usage ^= PROPERTY_USAGE_READ_ONLY;
 	} else if (property.name == "cell_offset_axis" && cell_shape == CELL_SHAPE_SQUARE) {
@@ -143,25 +143,25 @@ void GridMap::_validate_property(PropertyInfo &property) const {
 	}
 }
 
-void GridMap::set_collision_layer(uint32_t p_layer) {
+void TileMap3D::set_collision_layer(uint32_t p_layer) {
 	collision_layer = p_layer;
 	_reset_physic_bodies_collision_filters();
 }
 
-uint32_t GridMap::get_collision_layer() const {
+uint32_t TileMap3D::get_collision_layer() const {
 	return collision_layer;
 }
 
-void GridMap::set_collision_mask(uint32_t p_mask) {
+void TileMap3D::set_collision_mask(uint32_t p_mask) {
 	collision_mask = p_mask;
 	_reset_physic_bodies_collision_filters();
 }
 
-uint32_t GridMap::get_collision_mask() const {
+uint32_t TileMap3D::get_collision_mask() const {
 	return collision_mask;
 }
 
-void GridMap::set_collision_layer_value(int p_layer_number, bool p_value) {
+void TileMap3D::set_collision_layer_value(int p_layer_number, bool p_value) {
 	ERR_FAIL_COND_MSG(p_layer_number < 1, "Collision layer number must be between 1 and 32 inclusive.");
 	ERR_FAIL_COND_MSG(p_layer_number > 32, "Collision layer number must be between 1 and 32 inclusive.");
 	uint32_t collision_layer = get_collision_layer();
@@ -173,13 +173,13 @@ void GridMap::set_collision_layer_value(int p_layer_number, bool p_value) {
 	set_collision_layer(collision_layer);
 }
 
-bool GridMap::get_collision_layer_value(int p_layer_number) const {
+bool TileMap3D::get_collision_layer_value(int p_layer_number) const {
 	ERR_FAIL_COND_V_MSG(p_layer_number < 1, false, "Collision layer number must be between 1 and 32 inclusive.");
 	ERR_FAIL_COND_V_MSG(p_layer_number > 32, false, "Collision layer number must be between 1 and 32 inclusive.");
 	return get_collision_layer() & (1 << (p_layer_number - 1));
 }
 
-void GridMap::set_collision_mask_value(int p_layer_number, bool p_value) {
+void TileMap3D::set_collision_mask_value(int p_layer_number, bool p_value) {
 	ERR_FAIL_COND_MSG(p_layer_number < 1, "Collision layer number must be between 1 and 32 inclusive.");
 	ERR_FAIL_COND_MSG(p_layer_number > 32, "Collision layer number must be between 1 and 32 inclusive.");
 	uint32_t mask = get_collision_mask();
@@ -191,22 +191,22 @@ void GridMap::set_collision_mask_value(int p_layer_number, bool p_value) {
 	set_collision_mask(mask);
 }
 
-void GridMap::set_physics_material(Ref<PhysicsMaterial> p_material) {
+void TileMap3D::set_physics_material(Ref<PhysicsMaterial> p_material) {
 	physics_material = p_material;
 	_recreate_octant_data();
 }
 
-Ref<PhysicsMaterial> GridMap::get_physics_material() const {
+Ref<PhysicsMaterial> TileMap3D::get_physics_material() const {
 	return physics_material;
 }
 
-bool GridMap::get_collision_mask_value(int p_layer_number) const {
+bool TileMap3D::get_collision_mask_value(int p_layer_number) const {
 	ERR_FAIL_COND_V_MSG(p_layer_number < 1, false, "Collision layer number must be between 1 and 32 inclusive.");
 	ERR_FAIL_COND_V_MSG(p_layer_number > 32, false, "Collision layer number must be between 1 and 32 inclusive.");
 	return get_collision_mask() & (1 << (p_layer_number - 1));
 }
 
-Array GridMap::get_collision_shapes() const {
+Array TileMap3D::get_collision_shapes() const {
 	Array shapes;
 	for (const KeyValue<OctantKey, Octant *> &E : octant_map) {
 		Octant *g = E.value;
@@ -224,25 +224,25 @@ Array GridMap::get_collision_shapes() const {
 	return shapes;
 }
 
-void GridMap::set_bake_navigation(bool p_bake_navigation) {
+void TileMap3D::set_bake_navigation(bool p_bake_navigation) {
 	bake_navigation = p_bake_navigation;
 	_recreate_octant_data();
 }
 
-bool GridMap::is_baking_navigation() {
+bool TileMap3D::is_baking_navigation() {
 	return bake_navigation;
 }
 
-void GridMap::set_navigation_layers(uint32_t p_layers) {
+void TileMap3D::set_navigation_layers(uint32_t p_layers) {
 	navigation_layers = p_layers;
 	_recreate_octant_data();
 }
 
-uint32_t GridMap::get_navigation_layers() {
+uint32_t TileMap3D::get_navigation_layers() {
 	return navigation_layers;
 }
 
-void GridMap::set_mesh_library(const Ref<MeshLibrary> &p_mesh_library) {
+void TileMap3D::set_mesh_library(const Ref<MeshLibrary> &p_mesh_library) {
 	if (!mesh_library.is_null()) {
 		mesh_library->unregister_owner(this);
 	}
@@ -255,64 +255,64 @@ void GridMap::set_mesh_library(const Ref<MeshLibrary> &p_mesh_library) {
 	emit_signal(SNAME("changed"));
 }
 
-Ref<MeshLibrary> GridMap::get_mesh_library() const {
+Ref<MeshLibrary> TileMap3D::get_mesh_library() const {
 	return mesh_library;
 }
 
-void GridMap::set_cell_shape(GridMap::CellShape p_shape) {
+void TileMap3D::set_cell_shape(TileMap3D::CellShape p_shape) {
 	cell_shape = p_shape;
 	notify_property_list_changed();
 	_recreate_octant_data();
 	emit_signal(SNAME("changed"));
 }
 
-GridMap::CellShape GridMap::get_cell_shape() const {
+TileMap3D::CellShape TileMap3D::get_cell_shape() const {
 	return cell_shape;
 }
 
-void GridMap::set_cell_layout(GridMap::CellLayout p_layout) {
+void TileMap3D::set_cell_layout(TileMap3D::CellLayout p_layout) {
 	cell_layout = p_layout;
 	_recreate_octant_data();
 	emit_signal(SNAME("changed"));
 }
 
-GridMap::CellLayout GridMap::get_cell_layout() const {
+TileMap3D::CellLayout TileMap3D::get_cell_layout() const {
 	return cell_layout;
 }
 
-void GridMap::set_cell_offset_axis(GridMap::CellOffsetAxis p_offset_axis) {
+void TileMap3D::set_cell_offset_axis(TileMap3D::CellOffsetAxis p_offset_axis) {
 	cell_offset_axis = p_offset_axis;
 	_recreate_octant_data();
 	emit_signal(SNAME("changed"));
 }
 
-GridMap::CellOffsetAxis GridMap::get_cell_offset_axis() const {
+TileMap3D::CellOffsetAxis TileMap3D::get_cell_offset_axis() const {
 	return cell_offset_axis;
 }
 
-void GridMap::set_cell_size(const Vector3 &p_size) {
+void TileMap3D::set_cell_size(const Vector3 &p_size) {
 	ERR_FAIL_COND(p_size.x < 0.001 || p_size.y < 0.001 || p_size.z < 0.001);
 	cell_size = p_size;
 	_recreate_octant_data();
 	emit_signal(SNAME("changed"));
 }
 
-Vector3 GridMap::get_cell_size() const {
+Vector3 TileMap3D::get_cell_size() const {
 	return cell_size;
 }
 
-void GridMap::set_octant_size(int p_size) {
+void TileMap3D::set_octant_size(int p_size) {
 	ERR_FAIL_COND(p_size == 0);
 	octant_size = p_size;
 	_recreate_octant_data();
 	emit_signal(SNAME("changed"));
 }
 
-int GridMap::get_octant_size() const {
+int TileMap3D::get_octant_size() const {
 	return octant_size;
 }
 
-void GridMap::set_cell_item(const Vector3i &p_position, int p_item, int p_rot) {
+void TileMap3D::set_cell_item(const Vector3i &p_position, int p_item, int p_rot) {
 	if (baked_meshes.size() && !recreating_octants) {
 		//if you set a cell item, baked meshes go good bye
 		clear_baked_meshes();
@@ -391,7 +391,7 @@ void GridMap::set_cell_item(const Vector3i &p_position, int p_item, int p_rot) {
 	cell_map[key] = c;
 }
 
-int GridMap::get_cell_item(const Vector3i &p_position) const {
+int TileMap3D::get_cell_item(const Vector3i &p_position) const {
 	ERR_FAIL_INDEX_V(ABS(p_position.x), 1 << 20, INVALID_CELL_ITEM);
 	ERR_FAIL_INDEX_V(ABS(p_position.y), 1 << 20, INVALID_CELL_ITEM);
 	ERR_FAIL_INDEX_V(ABS(p_position.z), 1 << 20, INVALID_CELL_ITEM);
@@ -407,7 +407,7 @@ int GridMap::get_cell_item(const Vector3i &p_position) const {
 	return cell_map[key].item;
 }
 
-int GridMap::get_cell_item_orientation(const Vector3i &p_position) const {
+int TileMap3D::get_cell_item_orientation(const Vector3i &p_position) const {
 	ERR_FAIL_INDEX_V(ABS(p_position.x), 1 << 20, -1);
 	ERR_FAIL_INDEX_V(ABS(p_position.y), 1 << 20, -1);
 	ERR_FAIL_INDEX_V(ABS(p_position.z), 1 << 20, -1);
@@ -423,51 +423,51 @@ int GridMap::get_cell_item_orientation(const Vector3i &p_position) const {
 	return cell_map[key].rot;
 }
 
-Vector3 GridMap::map_to_world(const Vector3i &p_pos) const {
+Vector3 TileMap3D::map_to_world(const Vector3i &p_pos) const {
 	Vector3 ret = p_pos;
 
-	if (cell_shape == GridMap::CELL_SHAPE_ISOMETRIC || cell_shape == GridMap::CELL_SHAPE_HALF_OFFSET_SQUARE || cell_shape == GridMap::CELL_SHAPE_HEXAGON) {
+	if (cell_shape == TileMap3D::CELL_SHAPE_ISOMETRIC || cell_shape == TileMap3D::CELL_SHAPE_HALF_OFFSET_SQUARE || cell_shape == TileMap3D::CELL_SHAPE_HEXAGON) {
 		// Technically, those 3 shapes are equivalent, as they are basically half-offset, but with different levels or overlap.
 		// square = no overlap, hexagon = 0.25 overlap, isometric = 0.5 overlap
-		if (cell_offset_axis == GridMap::CELL_OFFSET_AXIS_HORIZONTAL) {
+		if (cell_offset_axis == TileMap3D::CELL_OFFSET_AXIS_HORIZONTAL) {
 			switch (cell_layout) {
-				case GridMap::CELL_LAYOUT_STACKED:
+				case TileMap3D::CELL_LAYOUT_STACKED:
 					ret = Vector3(ret.x + (Math::posmod(ret.z, 2) == 0 ? 0.0 : 0.5), ret.y, ret.z);
 					break;
-				case GridMap::CELL_LAYOUT_STACKED_OFFSET:
+				case TileMap3D::CELL_LAYOUT_STACKED_OFFSET:
 					ret = Vector3(ret.x + (Math::posmod(ret.z, 2) == 1 ? 0.0 : 0.5), ret.y, ret.z);
 					break;
-				case GridMap::CELL_LAYOUT_STAIRS_RIGHT:
+				case TileMap3D::CELL_LAYOUT_STAIRS_RIGHT:
 					ret = Vector3(ret.x + ret.z / 2, ret.y, ret.z);
 					break;
-				case GridMap::CELL_LAYOUT_STAIRS_DOWN:
+				case TileMap3D::CELL_LAYOUT_STAIRS_DOWN:
 					ret = Vector3(ret.x / 2, ret.y, ret.z * 2 + ret.x);
 					break;
-				case GridMap::CELL_LAYOUT_DIAMOND_RIGHT:
+				case TileMap3D::CELL_LAYOUT_DIAMOND_RIGHT:
 					ret = Vector3((ret.x + ret.z) / 2, ret.y, ret.z - ret.x);
 					break;
-				case GridMap::CELL_LAYOUT_DIAMOND_DOWN:
+				case TileMap3D::CELL_LAYOUT_DIAMOND_DOWN:
 					ret = Vector3((ret.x - ret.z) / 2, ret.y, ret.z + ret.x);
 					break;
 			}
 		} else { // CELL_OFFSET_AXIS_VERTICAL
 			switch (cell_layout) {
-				case GridMap::CELL_LAYOUT_STACKED:
+				case TileMap3D::CELL_LAYOUT_STACKED:
 					ret = Vector3(ret.x, ret.y, ret.z + (Math::posmod(ret.x, 2) == 0 ? 0.0 : 0.5));
 					break;
-				case GridMap::CELL_LAYOUT_STACKED_OFFSET:
+				case TileMap3D::CELL_LAYOUT_STACKED_OFFSET:
 					ret = Vector3(ret.x, ret.y, ret.z + (Math::posmod(ret.x, 2) == 1 ? 0.0 : 0.5));
 					break;
-				case GridMap::CELL_LAYOUT_STAIRS_RIGHT:
+				case TileMap3D::CELL_LAYOUT_STAIRS_RIGHT:
 					ret = Vector3(ret.x * 2 + ret.z, ret.y, ret.z / 2);
 					break;
-				case GridMap::CELL_LAYOUT_STAIRS_DOWN:
+				case TileMap3D::CELL_LAYOUT_STAIRS_DOWN:
 					ret = Vector3(ret.x, ret.y, ret.z + ret.x / 2);
 					break;
-				case GridMap::CELL_LAYOUT_DIAMOND_RIGHT:
+				case TileMap3D::CELL_LAYOUT_DIAMOND_RIGHT:
 					ret = Vector3(ret.x + ret.z, ret.y, (ret.z - ret.x) / 2);
 					break;
-				case GridMap::CELL_LAYOUT_DIAMOND_DOWN:
+				case TileMap3D::CELL_LAYOUT_DIAMOND_DOWN:
 					ret = Vector3(ret.x - ret.z, ret.y, (ret.z + ret.x) / 2);
 					break;
 			}
@@ -476,17 +476,17 @@ Vector3 GridMap::map_to_world(const Vector3i &p_pos) const {
 
 	// Multiply by the overlapping ratio
 	double overlapping_ratio = 1.0;
-	if (cell_offset_axis == GridMap::CELL_OFFSET_AXIS_HORIZONTAL) {
-		if (cell_shape == GridMap::CELL_SHAPE_ISOMETRIC) {
+	if (cell_offset_axis == TileMap3D::CELL_OFFSET_AXIS_HORIZONTAL) {
+		if (cell_shape == TileMap3D::CELL_SHAPE_ISOMETRIC) {
 			overlapping_ratio = 0.5;
-		} else if (cell_shape == GridMap::CELL_SHAPE_HEXAGON) {
+		} else if (cell_shape == TileMap3D::CELL_SHAPE_HEXAGON) {
 			overlapping_ratio = 0.75;
 		}
 		ret.z *= overlapping_ratio;
 	} else { // CELL_OFFSET_AXIS_VERTICAL
-		if (cell_shape == GridMap::CELL_SHAPE_ISOMETRIC) {
+		if (cell_shape == TileMap3D::CELL_SHAPE_ISOMETRIC) {
 			overlapping_ratio = 0.5;
-		} else if (cell_shape == GridMap::CELL_SHAPE_HEXAGON) {
+		} else if (cell_shape == TileMap3D::CELL_SHAPE_HEXAGON) {
 			overlapping_ratio = 0.75;
 		}
 		ret.x *= overlapping_ratio;
@@ -495,36 +495,36 @@ Vector3 GridMap::map_to_world(const Vector3i &p_pos) const {
 	return (ret + Vector3(0.5, 0.5, 0.5)) * cell_size;
 }
 
-Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
+Vector3i TileMap3D::world_to_map(const Vector3 &p_pos) const {
 	Vector3 ret = p_pos;
 	ret /= cell_size;
 
 	// Divide by the overlapping ratio
 	double overlapping_ratio = 1.0;
-	if (cell_offset_axis == GridMap::CELL_OFFSET_AXIS_HORIZONTAL) {
-		if (cell_shape == GridMap::CELL_SHAPE_ISOMETRIC) {
+	if (cell_offset_axis == TileMap3D::CELL_OFFSET_AXIS_HORIZONTAL) {
+		if (cell_shape == TileMap3D::CELL_SHAPE_ISOMETRIC) {
 			overlapping_ratio = 0.5;
-		} else if (cell_shape == GridMap::CELL_SHAPE_HEXAGON) {
+		} else if (cell_shape == TileMap3D::CELL_SHAPE_HEXAGON) {
 			overlapping_ratio = 0.75;
 		}
 		ret.z /= overlapping_ratio;
 	} else { // CELL_OFFSET_AXIS_VERTICAL
-		if (cell_shape == GridMap::CELL_SHAPE_ISOMETRIC) {
+		if (cell_shape == TileMap3D::CELL_SHAPE_ISOMETRIC) {
 			overlapping_ratio = 0.5;
-		} else if (cell_shape == GridMap::CELL_SHAPE_HEXAGON) {
+		} else if (cell_shape == TileMap3D::CELL_SHAPE_HEXAGON) {
 			overlapping_ratio = 0.75;
 		}
 		ret.x /= overlapping_ratio;
 	}
 
 	// For each half-offset shape, we check if we are in the corner of the tile, and thus should correct the world position accordingly.
-	if (cell_shape == GridMap::CELL_SHAPE_HALF_OFFSET_SQUARE || cell_shape == GridMap::CELL_SHAPE_HEXAGON || cell_shape == GridMap::CELL_SHAPE_ISOMETRIC) {
+	if (cell_shape == TileMap3D::CELL_SHAPE_HALF_OFFSET_SQUARE || cell_shape == TileMap3D::CELL_SHAPE_HEXAGON || cell_shape == TileMap3D::CELL_SHAPE_ISOMETRIC) {
 		// Technically, those 3 shapes are equivalent, as they are basically half-offset, but with different levels or overlap.
 		// square = no overlap, hexagon = 0.25 overlap, isometric = 0.5 overlap
-		if (cell_offset_axis == GridMap::CELL_OFFSET_AXIS_HORIZONTAL) {
+		if (cell_offset_axis == TileMap3D::CELL_OFFSET_AXIS_HORIZONTAL) {
 			// Smart floor of the position
 			Vector3 raw_pos = ret;
-			if (Math::posmod(Math::floor(ret.z), 2) ^ (cell_layout == GridMap::CELL_LAYOUT_STACKED_OFFSET)) {
+			if (Math::posmod(Math::floor(ret.z), 2) ^ (cell_layout == TileMap3D::CELL_LAYOUT_STACKED_OFFSET)) {
 				ret = Vector3(Math::floor(ret.x + 0.5) - 0.5, ret.y, Math::floor(ret.z));
 			} else {
 				ret = ret.floor();
@@ -536,7 +536,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 			bool in_top_right_triangle = (in_cell_pos - Vector2(0.5, 0.0)).cross(Vector2(0.5, 1.0 / overlapping_ratio - 1)) > 0;
 
 			switch (cell_layout) {
-				case GridMap::CELL_LAYOUT_STACKED:
+				case TileMap3D::CELL_LAYOUT_STACKED:
 					ret = ret.floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(Math::posmod(Math::floor(ret.z), 2) ? 0 : -1, 0, -1);
@@ -544,7 +544,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(Math::posmod(Math::floor(ret.z), 2) ? 1 : 0, 0, -1);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_STACKED_OFFSET:
+				case TileMap3D::CELL_LAYOUT_STACKED_OFFSET:
 					ret = ret.floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(Math::posmod(Math::floor(ret.z), 2) ? -1 : 0, 0, -1);
@@ -552,7 +552,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(Math::posmod(Math::floor(ret.z), 2) ? 0 : 1, 0, -1);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_STAIRS_RIGHT:
+				case TileMap3D::CELL_LAYOUT_STAIRS_RIGHT:
 					ret = Vector3(ret.x - ret.z / 2, ret.y, ret.z).floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(0, 0, -1);
@@ -560,7 +560,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(1, 0, -1);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_STAIRS_DOWN:
+				case TileMap3D::CELL_LAYOUT_STAIRS_DOWN:
 					ret = Vector3(ret.x * 2, ret.y, ret.z / 2 - ret.x).floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(-1, 0, 0);
@@ -568,7 +568,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(1, 0, -1);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_DIAMOND_RIGHT:
+				case TileMap3D::CELL_LAYOUT_DIAMOND_RIGHT:
 					ret = Vector3(ret.x - ret.z / 2, ret.y, ret.z / 2 + ret.x).floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(0, 0, -1);
@@ -576,7 +576,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(1, 0, 0);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_DIAMOND_DOWN:
+				case TileMap3D::CELL_LAYOUT_DIAMOND_DOWN:
 					ret = Vector3(ret.x + ret.z / 2, ret.y, ret.z / 2 - ret.x).floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(-1, 0, 0);
@@ -588,7 +588,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 		} else { // CELL_OFFSET_AXIS_VERTICAL
 			// Smart floor of the position
 			Vector3 raw_pos = ret;
-			if (Math::posmod(Math::floor(ret.x), 2) ^ (cell_layout == GridMap::CELL_LAYOUT_STACKED_OFFSET)) {
+			if (Math::posmod(Math::floor(ret.x), 2) ^ (cell_layout == TileMap3D::CELL_LAYOUT_STACKED_OFFSET)) {
 				ret = Vector3(Math::floor(ret.x), Math::floor(ret.y), Math::floor(ret.z + 0.5) - 0.5);
 			} else {
 				ret = ret.floor();
@@ -600,7 +600,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 			bool in_bottom_left_triangle = (in_cell_pos - Vector2(0.0, 0.5)).cross(Vector2(1.0 / overlapping_ratio - 1, 0.5)) <= 0;
 
 			switch (cell_layout) {
-				case GridMap::CELL_LAYOUT_STACKED:
+				case TileMap3D::CELL_LAYOUT_STACKED:
 					ret = ret.floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(-1, 0, Math::posmod(Math::floor(ret.x), 2) ? 0 : -1);
@@ -608,7 +608,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(-1, 0, Math::posmod(Math::floor(ret.x), 2) ? 1 : 0);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_STACKED_OFFSET:
+				case TileMap3D::CELL_LAYOUT_STACKED_OFFSET:
 					ret = ret.floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(-1, 0, Math::posmod(Math::floor(ret.x), 2) ? -1 : 0);
@@ -616,7 +616,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(-1, 0, Math::posmod(Math::floor(ret.x), 2) ? 0 : 1);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_STAIRS_RIGHT:
+				case TileMap3D::CELL_LAYOUT_STAIRS_RIGHT:
 					ret = Vector3(ret.x / 2 - ret.z, ret.y, ret.z * 2).floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(0, 0, -1);
@@ -624,7 +624,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(-1, 0, 1);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_STAIRS_DOWN:
+				case TileMap3D::CELL_LAYOUT_STAIRS_DOWN:
 					ret = Vector3(ret.x, ret.y, ret.z - ret.x / 2).floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(-1, 0, 0);
@@ -632,7 +632,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(-1, 0, 1);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_DIAMOND_RIGHT:
+				case TileMap3D::CELL_LAYOUT_DIAMOND_RIGHT:
 					ret = Vector3(ret.x / 2 - ret.z, ret.y, ret.z + ret.x / 2).floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(0, 0, -1);
@@ -640,7 +640,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 						ret += Vector3i(-1, 0, 0);
 					}
 					break;
-				case GridMap::CELL_LAYOUT_DIAMOND_DOWN:
+				case TileMap3D::CELL_LAYOUT_DIAMOND_DOWN:
 					ret = Vector3(ret.x / 2 + ret.z, ret.y, ret.z - ret.x / 2).floor();
 					if (in_top_left_triangle) {
 						ret += Vector3i(-1, 0, 0);
@@ -657,7 +657,7 @@ Vector3i GridMap::world_to_map(const Vector3 &p_pos) const {
 	return Vector3i(ret);
 }
 
-void GridMap::_octant_transform(const OctantKey &p_key) {
+void TileMap3D::_octant_transform(const OctantKey &p_key) {
 	ERR_FAIL_COND(!octant_map.has(p_key));
 	Octant &g = *octant_map[p_key];
 	PhysicsServer3D::get_singleton()->body_set_state(g.static_body, PhysicsServer3D::BODY_STATE_TRANSFORM, get_global_transform());
@@ -671,7 +671,7 @@ void GridMap::_octant_transform(const OctantKey &p_key) {
 	}
 }
 
-bool GridMap::_octant_update(const OctantKey &p_key) {
+bool TileMap3D::_octant_update(const OctantKey &p_key) {
 	ERR_FAIL_COND_V(!octant_map.has(p_key), false);
 	Octant &g = *octant_map[p_key];
 	if (!g.dirty) {
@@ -756,7 +756,7 @@ bool GridMap::_octant_update(const OctantKey &p_key) {
 			}
 		}
 
-		// add the item's navmesh at given xform to GridMap's Navigation ancestor
+		// add the item's navmesh at given xform to TileMap3D's Navigation ancestor
 		Ref<NavigationMesh> navmesh = mesh_library->get_item_navmesh(c.item);
 		if (navmesh.is_valid()) {
 			Octant::NavMesh nm;
@@ -831,14 +831,14 @@ bool GridMap::_octant_update(const OctantKey &p_key) {
 	return false;
 }
 
-void GridMap::_reset_physic_bodies_collision_filters() {
+void TileMap3D::_reset_physic_bodies_collision_filters() {
 	for (const KeyValue<OctantKey, Octant *> &E : octant_map) {
 		PhysicsServer3D::get_singleton()->body_set_collision_layer(E.value->static_body, collision_layer);
 		PhysicsServer3D::get_singleton()->body_set_collision_mask(E.value->static_body, collision_mask);
 	}
 }
 
-void GridMap::_octant_enter_world(const OctantKey &p_key) {
+void TileMap3D::_octant_enter_world(const OctantKey &p_key) {
 	ERR_FAIL_COND(!octant_map.has(p_key));
 	Octant &g = *octant_map[p_key];
 	PhysicsServer3D::get_singleton()->body_set_state(g.static_body, PhysicsServer3D::BODY_STATE_TRANSFORM, get_global_transform());
@@ -872,7 +872,7 @@ void GridMap::_octant_enter_world(const OctantKey &p_key) {
 	}
 }
 
-void GridMap::_octant_exit_world(const OctantKey &p_key) {
+void TileMap3D::_octant_exit_world(const OctantKey &p_key) {
 	ERR_FAIL_COND(!octant_map.has(p_key));
 	Octant &g = *octant_map[p_key];
 	PhysicsServer3D::get_singleton()->body_set_state(g.static_body, PhysicsServer3D::BODY_STATE_TRANSFORM, get_global_transform());
@@ -894,7 +894,7 @@ void GridMap::_octant_exit_world(const OctantKey &p_key) {
 	}
 }
 
-void GridMap::_octant_clean_up(const OctantKey &p_key) {
+void TileMap3D::_octant_clean_up(const OctantKey &p_key) {
 	ERR_FAIL_COND(!octant_map.has(p_key));
 	Octant &g = *octant_map[p_key];
 
@@ -922,7 +922,7 @@ void GridMap::_octant_clean_up(const OctantKey &p_key) {
 	g.multimesh_instances.clear();
 }
 
-void GridMap::_notification(int p_what) {
+void TileMap3D::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_WORLD: {
 			last_transform = get_global_transform();
@@ -973,7 +973,7 @@ void GridMap::_notification(int p_what) {
 	}
 }
 
-void GridMap::_update_visibility() {
+void TileMap3D::_update_visibility() {
 	if (!is_inside_tree()) {
 		return;
 	}
@@ -991,7 +991,7 @@ void GridMap::_update_visibility() {
 	}
 }
 
-void GridMap::_queue_octants_dirty() {
+void TileMap3D::_queue_octants_dirty() {
 	if (awaiting_update) {
 		return;
 	}
@@ -1000,7 +1000,7 @@ void GridMap::_queue_octants_dirty() {
 	awaiting_update = true;
 }
 
-void GridMap::_recreate_octant_data() {
+void TileMap3D::_recreate_octant_data() {
 	recreating_octants = true;
 	Map<IndexKey, Cell> cell_copy = cell_map;
 	_clear_internal();
@@ -1010,7 +1010,7 @@ void GridMap::_recreate_octant_data() {
 	recreating_octants = false;
 }
 
-void GridMap::_clear_internal() {
+void TileMap3D::_clear_internal() {
 	for (const KeyValue<OctantKey, Octant *> &E : octant_map) {
 		if (is_inside_world()) {
 			_octant_exit_world(E.key);
@@ -1024,16 +1024,16 @@ void GridMap::_clear_internal() {
 	cell_map.clear();
 }
 
-void GridMap::clear() {
+void TileMap3D::clear() {
 	_clear_internal();
 	clear_baked_meshes();
 }
 
-void GridMap::resource_changed(const RES &p_res) {
+void TileMap3D::resource_changed(const RES &p_res) {
 	_recreate_octant_data();
 }
 
-void GridMap::_update_octants_callback() {
+void TileMap3D::_update_octants_callback() {
 	if (!awaiting_update) {
 		return;
 	}
@@ -1055,70 +1055,70 @@ void GridMap::_update_octants_callback() {
 	awaiting_update = false;
 }
 
-void GridMap::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_collision_layer", "layer"), &GridMap::set_collision_layer);
-	ClassDB::bind_method(D_METHOD("get_collision_layer"), &GridMap::get_collision_layer);
+void TileMap3D::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_collision_layer", "layer"), &TileMap3D::set_collision_layer);
+	ClassDB::bind_method(D_METHOD("get_collision_layer"), &TileMap3D::get_collision_layer);
 
-	ClassDB::bind_method(D_METHOD("set_collision_mask", "mask"), &GridMap::set_collision_mask);
-	ClassDB::bind_method(D_METHOD("get_collision_mask"), &GridMap::get_collision_mask);
+	ClassDB::bind_method(D_METHOD("set_collision_mask", "mask"), &TileMap3D::set_collision_mask);
+	ClassDB::bind_method(D_METHOD("get_collision_mask"), &TileMap3D::get_collision_mask);
 
-	ClassDB::bind_method(D_METHOD("set_collision_mask_value", "layer_number", "value"), &GridMap::set_collision_mask_value);
-	ClassDB::bind_method(D_METHOD("get_collision_mask_value", "layer_number"), &GridMap::get_collision_mask_value);
+	ClassDB::bind_method(D_METHOD("set_collision_mask_value", "layer_number", "value"), &TileMap3D::set_collision_mask_value);
+	ClassDB::bind_method(D_METHOD("get_collision_mask_value", "layer_number"), &TileMap3D::get_collision_mask_value);
 
-	ClassDB::bind_method(D_METHOD("set_collision_layer_value", "layer_number", "value"), &GridMap::set_collision_layer_value);
-	ClassDB::bind_method(D_METHOD("get_collision_layer_value", "layer_number"), &GridMap::get_collision_layer_value);
+	ClassDB::bind_method(D_METHOD("set_collision_layer_value", "layer_number", "value"), &TileMap3D::set_collision_layer_value);
+	ClassDB::bind_method(D_METHOD("get_collision_layer_value", "layer_number"), &TileMap3D::get_collision_layer_value);
 
-	ClassDB::bind_method(D_METHOD("set_physics_material", "material"), &GridMap::set_physics_material);
-	ClassDB::bind_method(D_METHOD("get_physics_material"), &GridMap::get_physics_material);
+	ClassDB::bind_method(D_METHOD("set_physics_material", "material"), &TileMap3D::set_physics_material);
+	ClassDB::bind_method(D_METHOD("get_physics_material"), &TileMap3D::get_physics_material);
 
-	ClassDB::bind_method(D_METHOD("set_bake_navigation", "bake_navigation"), &GridMap::set_bake_navigation);
-	ClassDB::bind_method(D_METHOD("is_baking_navigation"), &GridMap::is_baking_navigation);
+	ClassDB::bind_method(D_METHOD("set_bake_navigation", "bake_navigation"), &TileMap3D::set_bake_navigation);
+	ClassDB::bind_method(D_METHOD("is_baking_navigation"), &TileMap3D::is_baking_navigation);
 
-	ClassDB::bind_method(D_METHOD("set_navigation_layers", "layers"), &GridMap::set_navigation_layers);
-	ClassDB::bind_method(D_METHOD("get_navigation_layers"), &GridMap::get_navigation_layers);
+	ClassDB::bind_method(D_METHOD("set_navigation_layers", "layers"), &TileMap3D::set_navigation_layers);
+	ClassDB::bind_method(D_METHOD("get_navigation_layers"), &TileMap3D::get_navigation_layers);
 
-	ClassDB::bind_method(D_METHOD("set_mesh_library", "mesh_library"), &GridMap::set_mesh_library);
-	ClassDB::bind_method(D_METHOD("get_mesh_library"), &GridMap::get_mesh_library);
+	ClassDB::bind_method(D_METHOD("set_mesh_library", "mesh_library"), &TileMap3D::set_mesh_library);
+	ClassDB::bind_method(D_METHOD("get_mesh_library"), &TileMap3D::get_mesh_library);
 
-	ClassDB::bind_method(D_METHOD("set_cell_shape", "shape"), &GridMap::set_cell_shape);
-	ClassDB::bind_method(D_METHOD("get_cell_shape"), &GridMap::get_cell_shape);
+	ClassDB::bind_method(D_METHOD("set_cell_shape", "shape"), &TileMap3D::set_cell_shape);
+	ClassDB::bind_method(D_METHOD("get_cell_shape"), &TileMap3D::get_cell_shape);
 
-	ClassDB::bind_method(D_METHOD("set_cell_layout", "layout"), &GridMap::set_cell_layout);
-	ClassDB::bind_method(D_METHOD("get_cell_layout"), &GridMap::get_cell_layout);
+	ClassDB::bind_method(D_METHOD("set_cell_layout", "layout"), &TileMap3D::set_cell_layout);
+	ClassDB::bind_method(D_METHOD("get_cell_layout"), &TileMap3D::get_cell_layout);
 
-	ClassDB::bind_method(D_METHOD("set_cell_offset_axis", "offset_axis"), &GridMap::set_cell_offset_axis);
-	ClassDB::bind_method(D_METHOD("get_cell_offset_axis"), &GridMap::get_cell_offset_axis);
+	ClassDB::bind_method(D_METHOD("set_cell_offset_axis", "offset_axis"), &TileMap3D::set_cell_offset_axis);
+	ClassDB::bind_method(D_METHOD("get_cell_offset_axis"), &TileMap3D::get_cell_offset_axis);
 
-	ClassDB::bind_method(D_METHOD("set_cell_size", "size"), &GridMap::set_cell_size);
-	ClassDB::bind_method(D_METHOD("get_cell_size"), &GridMap::get_cell_size);
+	ClassDB::bind_method(D_METHOD("set_cell_size", "size"), &TileMap3D::set_cell_size);
+	ClassDB::bind_method(D_METHOD("get_cell_size"), &TileMap3D::get_cell_size);
 
-	ClassDB::bind_method(D_METHOD("set_cell_scale", "scale"), &GridMap::set_cell_scale);
-	ClassDB::bind_method(D_METHOD("get_cell_scale"), &GridMap::get_cell_scale);
+	ClassDB::bind_method(D_METHOD("set_cell_scale", "scale"), &TileMap3D::set_cell_scale);
+	ClassDB::bind_method(D_METHOD("get_cell_scale"), &TileMap3D::get_cell_scale);
 
-	ClassDB::bind_method(D_METHOD("set_octant_size", "size"), &GridMap::set_octant_size);
-	ClassDB::bind_method(D_METHOD("get_octant_size"), &GridMap::get_octant_size);
+	ClassDB::bind_method(D_METHOD("set_octant_size", "size"), &TileMap3D::set_octant_size);
+	ClassDB::bind_method(D_METHOD("get_octant_size"), &TileMap3D::get_octant_size);
 
-	ClassDB::bind_method(D_METHOD("set_cell_item", "position", "item", "orientation"), &GridMap::set_cell_item, DEFVAL(0));
-	ClassDB::bind_method(D_METHOD("get_cell_item", "position"), &GridMap::get_cell_item);
-	ClassDB::bind_method(D_METHOD("get_cell_item_orientation", "position"), &GridMap::get_cell_item_orientation);
+	ClassDB::bind_method(D_METHOD("set_cell_item", "position", "item", "orientation"), &TileMap3D::set_cell_item, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("get_cell_item", "position"), &TileMap3D::get_cell_item);
+	ClassDB::bind_method(D_METHOD("get_cell_item_orientation", "position"), &TileMap3D::get_cell_item_orientation);
 
-	ClassDB::bind_method(D_METHOD("world_to_map", "world_position"), &GridMap::world_to_map);
-	ClassDB::bind_method(D_METHOD("map_to_world", "map_position"), &GridMap::map_to_world);
+	ClassDB::bind_method(D_METHOD("world_to_map", "world_position"), &TileMap3D::world_to_map);
+	ClassDB::bind_method(D_METHOD("map_to_world", "map_position"), &TileMap3D::map_to_world);
 
-	ClassDB::bind_method(D_METHOD("_update_octants_callback"), &GridMap::_update_octants_callback);
-	ClassDB::bind_method(D_METHOD("resource_changed", "resource"), &GridMap::resource_changed);
+	ClassDB::bind_method(D_METHOD("_update_octants_callback"), &TileMap3D::_update_octants_callback);
+	ClassDB::bind_method(D_METHOD("resource_changed", "resource"), &TileMap3D::resource_changed);
 
-	ClassDB::bind_method(D_METHOD("clear"), &GridMap::clear);
+	ClassDB::bind_method(D_METHOD("clear"), &TileMap3D::clear);
 
-	ClassDB::bind_method(D_METHOD("get_used_cells"), &GridMap::get_used_cells);
-	ClassDB::bind_method(D_METHOD("get_used_cells_by_item", "item"), &GridMap::get_used_cells_by_item);
+	ClassDB::bind_method(D_METHOD("get_used_cells"), &TileMap3D::get_used_cells);
+	ClassDB::bind_method(D_METHOD("get_used_cells_by_item", "item"), &TileMap3D::get_used_cells_by_item);
 
-	ClassDB::bind_method(D_METHOD("get_meshes"), &GridMap::get_meshes);
-	ClassDB::bind_method(D_METHOD("get_bake_meshes"), &GridMap::get_bake_meshes);
-	ClassDB::bind_method(D_METHOD("get_bake_mesh_instance", "idx"), &GridMap::get_bake_mesh_instance);
+	ClassDB::bind_method(D_METHOD("get_meshes"), &TileMap3D::get_meshes);
+	ClassDB::bind_method(D_METHOD("get_bake_meshes"), &TileMap3D::get_bake_meshes);
+	ClassDB::bind_method(D_METHOD("get_bake_mesh_instance", "idx"), &TileMap3D::get_bake_mesh_instance);
 
-	ClassDB::bind_method(D_METHOD("clear_baked_meshes"), &GridMap::clear_baked_meshes);
-	ClassDB::bind_method(D_METHOD("make_baked_meshes", "gen_lightmap_uv", "lightmap_uv_texel_size"), &GridMap::make_baked_meshes, DEFVAL(false), DEFVAL(0.1));
+	ClassDB::bind_method(D_METHOD("clear_baked_meshes"), &TileMap3D::clear_baked_meshes);
+	ClassDB::bind_method(D_METHOD("make_baked_meshes", "gen_lightmap_uv", "lightmap_uv_texel_size"), &TileMap3D::make_baked_meshes, DEFVAL(false), DEFVAL(0.1));
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "mesh_library", PROPERTY_HINT_RESOURCE_TYPE, "MeshLibrary"), "set_mesh_library", "get_mesh_library");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "physics_material", PROPERTY_HINT_RESOURCE_TYPE, "PhysicsMaterial"), "set_physics_material", "get_physics_material");
@@ -1156,16 +1156,16 @@ void GridMap::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("changed"));
 }
 
-void GridMap::set_cell_scale(float p_scale) {
+void TileMap3D::set_cell_scale(float p_scale) {
 	cell_scale = p_scale;
 	_recreate_octant_data();
 }
 
-float GridMap::get_cell_scale() const {
+float TileMap3D::get_cell_scale() const {
 	return cell_scale;
 }
 
-Array GridMap::get_used_cells() const {
+Array TileMap3D::get_used_cells() const {
 	Array a;
 	a.resize(cell_map.size());
 	int i = 0;
@@ -1177,7 +1177,7 @@ Array GridMap::get_used_cells() const {
 	return a;
 }
 
-Array GridMap::get_used_cells_by_item(int p_item) const {
+Array TileMap3D::get_used_cells_by_item(int p_item) const {
 	Array a;
 	for (const KeyValue<IndexKey, Cell> &E : cell_map) {
 		if (E.value.item == p_item) {
@@ -1189,7 +1189,7 @@ Array GridMap::get_used_cells_by_item(int p_item) const {
 	return a;
 }
 
-Array GridMap::get_meshes() const {
+Array TileMap3D::get_meshes() const {
 	if (mesh_library.is_null()) {
 		return Array();
 	}
@@ -1224,7 +1224,7 @@ Array GridMap::get_meshes() const {
 	return meshes;
 }
 
-void GridMap::clear_baked_meshes() {
+void TileMap3D::clear_baked_meshes() {
 	for (int i = 0; i < baked_meshes.size(); i++) {
 		RS::get_singleton()->free(baked_meshes[i].instance);
 	}
@@ -1233,7 +1233,7 @@ void GridMap::clear_baked_meshes() {
 	_recreate_octant_data();
 }
 
-void GridMap::make_baked_meshes(bool p_gen_lightmap_uv, float p_lightmap_uv_texel_size) {
+void TileMap3D::make_baked_meshes(bool p_gen_lightmap_uv, float p_lightmap_uv_texel_size) {
 	if (!mesh_library.is_valid()) {
 		return;
 	}
@@ -1317,7 +1317,7 @@ void GridMap::make_baked_meshes(bool p_gen_lightmap_uv, float p_lightmap_uv_texe
 	_recreate_octant_data();
 }
 
-Array GridMap::get_bake_meshes() {
+Array TileMap3D::get_bake_meshes() {
 	if (!baked_meshes.size()) {
 		make_baked_meshes(true);
 	}
@@ -1331,16 +1331,16 @@ Array GridMap::get_bake_meshes() {
 	return arr;
 }
 
-RID GridMap::get_bake_mesh_instance(int p_idx) {
+RID TileMap3D::get_bake_mesh_instance(int p_idx) {
 	ERR_FAIL_INDEX_V(p_idx, baked_meshes.size(), RID());
 	return baked_meshes[p_idx].instance;
 }
 
-GridMap::GridMap() {
+TileMap3D::TileMap3D() {
 	set_notify_transform(true);
 }
 
-GridMap::~GridMap() {
+TileMap3D::~TileMap3D() {
 	if (!mesh_library.is_null()) {
 		mesh_library->unregister_owner(this);
 	}
