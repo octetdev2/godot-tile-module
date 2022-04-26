@@ -18,10 +18,10 @@ jobs:
           ref: master
 
       # Clone our module under the correct directory
-      - name: Check out godot-gridmap-module repository
+      - name: Check out godot-tile-module repository
         uses: actions/checkout@v2
         with:
-          path: custom_modules/gridmap
+          path: custom_modules/tile
 
       - name: Configure dependencies
         run: |

@@ -39,14 +39,14 @@
 #include "editor/grid_map_editor_plugin.h"
 #endif
 
-void register_gridmap_types() {
+void register_tile_types() {
 	GDREGISTER_CLASS(GridMap);
 #ifdef TOOLS_ENABLED
 	EditorPlugins::add_by_type<GridMapEditorPlugin>();
 #endif
 }
 
-void unregister_gridmap_types() {
+void unregister_tile_types() {
 }
 
 #endif // _3D_DISABLED
