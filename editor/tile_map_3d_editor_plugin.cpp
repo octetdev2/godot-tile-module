@@ -899,6 +899,7 @@ void TileMap3DEditor::edit(TileMap3D *p_gridmap) {
 
 	input_action = INPUT_NONE;
 	selection.active = false;
+  _update_cursor_instance();
 	_update_selection_transform();
 	_update_paste_indicator();
 
